@@ -39,7 +39,7 @@ app.use(express.static("uploads"));
 //   api_secret: process.env.CLOUDINARY_API_SECRET,
 // });
 
-app.get("/api", (req, res) => {
+app.get("/", (req, res) => {
   res.send("Hello World");
 });
 
@@ -509,6 +509,8 @@ if (!fs.existsSync("uploads")) {
   fs.mkdirSync("uploads");
 }
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`Server running on port ${PORT}`);
+// });
+
+export default app;
