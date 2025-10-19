@@ -347,7 +347,7 @@ app.post(
         if (req.file.mimetype === "application/pdf") {
           // Parse PDF
           const pdfBuffer = fs.readFileSync(req.file.path);
-          const pdfData = await new PDFParse({ data: pdfBuffer });
+          // const pdfData = await new PDFParse({ data: pdfBuffer });
           let text = "";
           text = await pdfData.getText();
         
