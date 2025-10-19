@@ -506,6 +506,8 @@ if (!fs.existsSync("uploads")) {
   fs.mkdirSync("uploads");
 }
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`Server running on port ${PORT}`);
+// });
+
+export default app;
