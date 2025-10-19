@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import multer from "multer";
 import cloudinary from "cloudinary";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-// import { PDFParse } from "pdf-parse";
+import { PDFParse } from "pdf-parse";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
