@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import multer from "multer";
 import cloudinary from "cloudinary";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { PDFParse } from "pdf-parse";
+// import { PDFParse } from "pdf-parse";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
@@ -44,192 +44,192 @@ app.get("/", (req, res) => {
 });
 
 // Gemini AI configuration
-// const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// // MongoDB connection
-// mongoose
-//   .connect(process.env.MONGO_URI)
-//   .then(() => console.log("MongoDB connected"))
-//   .catch((err) => console.error("MongoDB connection error:", err));
+// MongoDB connection
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error("MongoDB connection error:", err));
 
-// // User Schema
-// const userSchema = new mongoose.Schema(
-//   {
-//     name: { type: String, required: true },
-//     email: { type: String, required: true, unique: true },
-//     password: { type: String, required: true },
-//     familyMembers: [
-//       { type: mongoose.Schema.Types.ObjectId, ref: "FamilyMember" },
-//     ],
-//   },
-//   { timestamps: true }
-// );
+// User Schema
+const userSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    familyMembers: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "FamilyMember" },
+    ],
+  },
+  { timestamps: true }
+);
 
-// // Report Subschema
-// const reportSchema = new mongoose.Schema(
-//   {
-//     title: { type: String, required: true },
-//     type: { type: String, enum: ["image", "pdf"], required: true },
-//     // cloudinaryUrl: { type: String, required: true },
-//     uploadDate: { type: Date, default: Date.now },
-//     aiAnalysis: { type: String, default: "" },
-//   },
-//   { _id: false } // optional: prevents separate _id for each report
-// );
+// Report Subschema
+const reportSchema = new mongoose.Schema(
+  {
+    title: { type: String, required: true },
+    type: { type: String, enum: ["image", "pdf"], required: true },
+    // cloudinaryUrl: { type: String, required: true },
+    uploadDate: { type: Date, default: Date.now },
+    aiAnalysis: { type: String, default: "" },
+  },
+  { _id: false } // optional: prevents separate _id for each report
+);
 
-// // Family Member Schema
-// const familyMemberSchema = new mongoose.Schema(
-//   {
-//     userId: {
-//       type: mongoose.Schema.Types.ObjectId,
-//       ref: "User",
-//       required: true,
-//     },
-//     name: { type: String, required: true },
-//     age: { type: Number, required: true },
-//     gender: { type: String, required: true },
-//     relationship: { type: String, required: true },
-//     medicalHistory: [
-//       {
-//         condition: String,
-//         date: Date,
-//         notes: String,
-//       },
-//     ],
-//     medications: [
-//       {
-//         name: String,
-//         dosage: String,
-//         frequency: String,
-//         startDate: Date,
-//       },
-//     ],
-//     reports: [reportSchema], // ← use proper sub-schema here
-//   },
-//   { timestamps: true }
-// );
+// Family Member Schema
+const familyMemberSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    name: { type: String, required: true },
+    age: { type: Number, required: true },
+    gender: { type: String, required: true },
+    relationship: { type: String, required: true },
+    medicalHistory: [
+      {
+        condition: String,
+        date: Date,
+        notes: String,
+      },
+    ],
+    medications: [
+      {
+        name: String,
+        dosage: String,
+        frequency: String,
+        startDate: Date,
+      },
+    ],
+    reports: [reportSchema], // ← use proper sub-schema here
+  },
+  { timestamps: true }
+);
 
-// const User = mongoose.model("User", userSchema);
-// const FamilyMember = mongoose.model("FamilyMember", familyMemberSchema);
+const User = mongoose.model("User", userSchema);
+const FamilyMember = mongoose.model("FamilyMember", familyMemberSchema);
 
-// // Multer configuration for file uploads
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, "uploads/");
-//   },
-//   filename: (req, file, cb) => {
-//     cb(null, Date.now() + "-" + file.originalname);
-//   },
-// });
+// Multer configuration for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
 
-// const upload = multer({
-//   storage: storage,
-//   fileFilter: (req, file, cb) => {
-//     if (
-//       file.mimetype.startsWith("image/") ||
-//       file.mimetype === "application/pdf"
-//     ) {
-//       cb(null, true);
-//     } else {
-//       cb(new Error("Only images and PDF files are allowed"), false);
-//     }
-//   },
-//   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-// });
+const upload = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    if (
+      file.mimetype.startsWith("image/") ||
+      file.mimetype === "application/pdf"
+    ) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only images and PDF files are allowed"), false);
+    }
+  },
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+});
 
-// // JWT Middleware
-// const authenticateToken = (req, res, next) => {
-//   const authHeader = req.headers["authorization"];
-//   const token = authHeader && authHeader.split(" ")[1];
+// JWT Middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
 
-//   if (!token) {
-//     return res.status(401).json({ message: "Access token required" });
-//   }
+  if (!token) {
+    return res.status(401).json({ message: "Access token required" });
+  }
 
-//   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-//     if (err) {
-//       return res.status(403).json({ message: "Invalid or expired token" });
-//     }
-//     req.user = user;
-//     next();
-//   });
-// };
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ message: "Invalid or expired token" });
+    }
+    req.user = user;
+    next();
+  });
+};
 
-// // Routes
+// Routes
 
-// // User Registration
-// app.post("/api/auth/register", async (req, res) => {
-//   try {
-//     const { name, email, password } = req.body;
+// User Registration
+app.post("/api/auth/register", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
 
-//     // Check if user already exists
-//     const existingUser = await User.findOne({ email });
-//     if (existingUser) {
-//       return res.status(400).json({ message: "User already exists" });
-//     }
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
 
-//     // Hash password
-//     const hashedPassword = await bcrypt.hash(password, 10);
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-//     // Create user
-//     const user = new User({
-//       name,
-//       email,
-//       password: hashedPassword,
-//     });
+    // Create user
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+    });
 
-//     await user.save();
+    await user.save();
 
-//     // Generate JWT
-//     const token = jwt.sign(
-//       { userId: user._id, email: user.email },
-//       process.env.JWT_SECRET,
-//       { expiresIn: "7d" }
-//     );
+    // Generate JWT
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
-//     res.status(201).json({
-//       message: "User created successfully",
-//       token,
-//       user: { id: user._id, name: user.name, email: user.email },
-//     });
-//   } catch (error) {
-//     res.status(500).json({ message: "Server error", error: error.message });
-//   }
-// });
+    res.status(201).json({
+      message: "User created successfully",
+      token,
+      user: { id: user._id, name: user.name, email: user.email },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
 
-// // User Login
-// app.post("/api/auth/login", async (req, res) => {
-//   try {
-//     const { email, password } = req.body;
+// User Login
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-//     // Find user
-//     const user = await User.findOne({ email });
-//     if (!user) {
-//       return res.status(400).json({ message: "Invalid credentials" });
-//     }
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
-//     // Check password
-//     const isValidPassword = await bcrypt.compare(password, user.password);
-//     if (!isValidPassword) {
-//       return res.status(400).json({ message: "Invalid credentials" });
-//     }
+    // Check password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
-//     // Generate JWT
-//     const token = jwt.sign(
-//       { userId: user._id, email: user.email },
-//       process.env.JWT_SECRET,
-//       { expiresIn: "7d" }
-//     );
+    // Generate JWT
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
-//     res.json({
-//       message: "Login successful",
-//       token,
-//       user: { id: user._id, name: user.name, email: user.email },
-//     });
-//   } catch (error) {
-//     res.status(500).json({ message: "Server error", error: error.message });
-//   }
-// });
+    res.json({
+      message: "Login successful",
+      token,
+      user: { id: user._id, name: user.name, email: user.email },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
 
 // // Get user dashboard data
 // app.get("/api/dashboard", authenticateToken, async (req, res) => {
