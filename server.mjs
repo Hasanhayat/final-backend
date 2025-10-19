@@ -62,6 +62,18 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Report Subschema
+const reportSchema = new mongoose.Schema(
+  {
+    title: { type: String, required: true },
+    type: { type: String, enum: ["image", "pdf"], required: true },
+    // cloudinaryUrl: { type: String, required: true },
+    uploadDate: { type: Date, default: Date.now },
+    aiAnalysis: { type: String, default: "" },
+  },
+  { _id: false } // optional: prevents separate _id for each report
+);
+
 // Family Member Schema
 const familyMemberSchema = new mongoose.Schema(
   {
@@ -89,15 +101,7 @@ const familyMemberSchema = new mongoose.Schema(
         startDate: Date,
       },
     ],
-    reports: [
-      {
-        title: String,
-        type: String, // 'image' or 'pdf'
-        cloudinaryUrl: String,
-        uploadDate: { type: Date, default: Date.now },
-        aiAnalysis: String,
-      },
-    ],
+    reports: [reportSchema], // ← use proper sub-schema here
   },
   { timestamps: true }
 );
@@ -325,11 +329,14 @@ app.post(
         return res.status(404).json({ message: "Family member not found" });
       }
 
-      // Upload to Cloudinary
-      const result = await cloudinary.v2.uploader.upload(req.file.path, {
-        resource_type: "auto",
-        folder: "medical-reports",
-      });
+      // // Upload to Cloudinary
+      // const result = await cloudinary.v2.uploader.upload(req.file.path, {
+      //   resource_type: "auto", // IMPORTANT ✅ for PDFs
+      //   folder: "medical-reports",
+      //   use_filename: true,
+      //   unique_filename: false,
+      //   format: req.file.mimetype === "application/pdf" ? "pdf" : undefined,
+      // });
 
       // Analyze with Gemini AI
       let aiAnalysis = "";
@@ -340,16 +347,7 @@ app.post(
           const pdfData = await new PDFParse({ data: pdfBuffer });
           let text = "";
           text = await pdfData.getText();
-          // pdfData
-          //   .getText()
-          //   .then((result) => {
-          //     console.log('datap',result.text);
-          //     text = result.text;
-          //   })
-          //   .finally(async () => {
-          //     await pdfData.destroy();
-          //   });
-          // const text = pdfData.text;
+        
           console.log("data", text);
           text = JSON.stringify(text);
           // console.log(pdfData.text);
@@ -388,15 +386,16 @@ app.post(
       const report = {
         title: req.body.title || req.file.originalname,
         type: req.file.mimetype === "application/pdf" ? "pdf" : "image",
-        cloudinaryUrl: result.secure_url,
+        // cloudinaryUrl: result.secure_url,
         aiAnalysis,
       };
-      // familyMember.reports.push(report);
-      // await familyMember.save();
 
-      // // // Clean up local file
-      // fs.unlinkSync(req.file.path);
-      // console.log("report", report);
+      familyMember.reports.push(report);
+      await familyMember.save();
+
+      // // Clean up local file
+      fs.unlinkSync(req.file.path);
+      console.log("report", report);
 
       res.status(201).json({
         message: "Report uploaded and analyzed successfully",
