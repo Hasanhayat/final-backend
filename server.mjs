@@ -395,7 +395,7 @@ app.post(
 
       // // Clean up local file
       fs.unlinkSync(req.file.path);
-      console.log("report", report);
+      // console.log("report", report);
 
       res.status(201).json({
         message: "Report uploaded and analyzed successfully",
