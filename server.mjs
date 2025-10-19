@@ -231,87 +231,87 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-// // Get user dashboard data
-// app.get("/api/dashboard", authenticateToken, async (req, res) => {
-//   try {
-//     const familyMembers = await FamilyMember.find({ userId: req.user.userId });
-//     res.json({ familyMembers });
-//   } catch (error) {
-//     res.status(500).json({ message: "Server error", error: error.message });
-//   }
-// });
+// Get user dashboard data
+app.get("/api/dashboard", authenticateToken, async (req, res) => {
+  try {
+    const familyMembers = await FamilyMember.find({ userId: req.user.userId });
+    res.json({ familyMembers });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
 
-// // Add family member
-// app.post("/api/family-members", authenticateToken, async (req, res) => {
-//   try {
-//     const { name, age, gender, relationship } = req.body;
+// Add family member
+app.post("/api/family-members", authenticateToken, async (req, res) => {
+  try {
+    const { name, age, gender, relationship } = req.body;
 
-//     const familyMember = new FamilyMember({
-//       userId: req.user.userId,
-//       name,
-//       age,
-//       gender,
-//       relationship,
-//     });
+    const familyMember = new FamilyMember({
+      userId: req.user.userId,
+      name,
+      age,
+      gender,
+      relationship,
+    });
 
-//     await familyMember.save();
+    await familyMember.save();
 
-//     // Add to user's family members array
-//     await User.findByIdAndUpdate(req.user.userId, {
-//       $push: { familyMembers: familyMember._id },
-//     });
+    // Add to user's family members array
+    await User.findByIdAndUpdate(req.user.userId, {
+      $push: { familyMembers: familyMember._id },
+    });
 
-//     res.status(201).json({
-//       message: "Family member added successfully",
-//       familyMember,
-//     });
-//   } catch (error) {
-//     res.status(500).json({ message: "Server error", error: error.message });
-//   }
-// });
+    res.status(201).json({
+      message: "Family member added successfully",
+      familyMember,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
 
-// // Get family member details
-// app.get("/api/family-members/:id", authenticateToken, async (req, res) => {
-//   try {
-//     const familyMember = await FamilyMember.findOne({
-//       _id: req.params.id,
-//       userId: req.user.userId,
-//     });
+// Get family member details
+app.get("/api/family-members/:id", authenticateToken, async (req, res) => {
+  try {
+    const familyMember = await FamilyMember.findOne({
+      _id: req.params.id,
+      userId: req.user.userId,
+    });
 
-//     if (!familyMember) {
-//       return res.status(404).json({ message: "Family member not found" });
-//     }
+    if (!familyMember) {
+      return res.status(404).json({ message: "Family member not found" });
+    }
 
-//     res.json({ familyMember });
-//   } catch (error) {
-//     res.status(500).json({ message: "Server error", error: error.message });
-//   }
-// });
+    res.json({ familyMember });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
 
-// // Update family member
-// app.put("/api/family-members/:id", authenticateToken, async (req, res) => {
-//   try {
-//     const { name, age, gender, relationship, medicalHistory, medications } =
-//       req.body;
+// Update family member
+app.put("/api/family-members/:id", authenticateToken, async (req, res) => {
+  try {
+    const { name, age, gender, relationship, medicalHistory, medications } =
+      req.body;
 
-//     const familyMember = await FamilyMember.findOneAndUpdate(
-//       { _id: req.params.id, userId: req.user.userId },
-//       { name, age, gender, relationship, medicalHistory, medications },
-//       { new: true }
-//     );
+    const familyMember = await FamilyMember.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.userId },
+      { name, age, gender, relationship, medicalHistory, medications },
+      { new: true }
+    );
 
-//     if (!familyMember) {
-//       return res.status(404).json({ message: "Family member not found" });
-//     }
+    if (!familyMember) {
+      return res.status(404).json({ message: "Family member not found" });
+    }
 
-//     res.json({
-//       message: "Family member updated successfully",
-//       familyMember,
-//     });
-//   } catch (error) {
-//     res.status(500).json({ message: "Server error", error: error.message });
-//   }
-// });
+    res.json({
+      message: "Family member updated successfully",
+      familyMember,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+});
 
 // // Upload medical report
 // app.post(
