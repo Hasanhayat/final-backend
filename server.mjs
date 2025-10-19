@@ -13,6 +13,7 @@ import path from "path";
 import bodyParser from "body-parser";
 
 import { fileURLToPath } from "url";
+import { PDFParse } from "pdf-parse";
 
 dotenv.config();
 
@@ -313,201 +314,201 @@ app.put("/api/family-members/:id", authenticateToken, async (req, res) => {
   }
 });
 
-// // Upload medical report
-// app.post(
-//   "/api/family-members/:id/reports",
-//   authenticateToken,
-//   upload.single("report"),
-//   async (req, res) => {
-//     try {
-//       if (!req.file) {
-//         return res.status(400).json({ message: "No file uploaded" });
-//       }
-//       const familyMember = await FamilyMember.findOne({
-//         _id: req.params.id,
-//         userId: req.user.userId,
-//       });
+// Upload medical report
+app.post(
+  "/api/family-members/:id/reports",
+  authenticateToken,
+  upload.single("report"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      const familyMember = await FamilyMember.findOne({
+        _id: req.params.id,
+        userId: req.user.userId,
+      });
 
-//       if (!familyMember) {
-//         return res.status(404).json({ message: "Family member not found" });
-//       }
+      if (!familyMember) {
+        return res.status(404).json({ message: "Family member not found" });
+      }
 
-//       // // Upload to Cloudinary
-//       // const result = await cloudinary.v2.uploader.upload(req.file.path, {
-//       //   resource_type: "auto", // IMPORTANT ✅ for PDFs
-//       //   folder: "medical-reports",
-//       //   use_filename: true,
-//       //   unique_filename: false,
-//       //   format: req.file.mimetype === "application/pdf" ? "pdf" : undefined,
-//       // });
+      // // Upload to Cloudinary
+      // const result = await cloudinary.v2.uploader.upload(req.file.path, {
+      //   resource_type: "auto", // IMPORTANT ✅ for PDFs
+      //   folder: "medical-reports",
+      //   use_filename: true,
+      //   unique_filename: false,
+      //   format: req.file.mimetype === "application/pdf" ? "pdf" : undefined,
+      // });
 
-//       // Analyze with Gemini AI
-//       let aiAnalysis = "";
-//       try {
-//         if (req.file.mimetype === "application/pdf") {
-//           // Parse PDF
-//           const pdfBuffer = fs.readFileSync(req.file.path);
-//           const pdfData = await new PDFParse({ data: pdfBuffer });
-//           let text = "";
-//           text = await pdfData.getText();
+      // Analyze with Gemini AI
+      let aiAnalysis = "";
+      try {
+        if (req.file.mimetype === "application/pdf") {
+          // Parse PDF
+          const pdfBuffer = fs.readFileSync(req.file.path);
+          const pdfData = await new PDFParse({ data: pdfBuffer });
+          let text = "";
+          text = await pdfData.getText();
         
-//           console.log("data", text);
-//           text = JSON.stringify(text);
-//           // console.log(pdfData.text);
-//           // console.log("data",text);
+          console.log("data", text);
+          text = JSON.stringify(text);
+          // console.log(pdfData.text);
+          // console.log("data",text);
 
-//           const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-//           const prompt = `Analyze this medical report and provide health recommendations. Focus on key findings, potential concerns, and actionable advice. Keep the response concise and professional:\n\n${text}`;
+          const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+          const prompt = `Analyze this medical report and provide health recommendations. Focus on key findings, potential concerns, and actionable advice. Keep the response concise and professional:\n\n${text}`;
 
-//           const aiResult = await model.generateContent(prompt);
+          const aiResult = await model.generateContent(prompt);
 
-//           aiAnalysis = aiResult.response.text();
-//           console.log("ai", aiAnalysis);
-//         } else {
-//           // For images, we'll use a simple prompt since Gemini can analyze images
-//           const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-//           const prompt = `Analyze this medical image/report and provide health recommendations. Focus on key findings, potential concerns, and actionable advice. Keep the response concise and professional.`;
+          aiAnalysis = aiResult.response.text();
+          console.log("ai", aiAnalysis);
+        } else {
+          // For images, we'll use a simple prompt since Gemini can analyze images
+          const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+          const prompt = `Analyze this medical image/report and provide health recommendations. Focus on key findings, potential concerns, and actionable advice. Keep the response concise and professional.`;
 
-//           const aiResult = await model.generateContent([
-//             prompt,
-//             {
-//               inlineData: {
-//                 data: fs.readFileSync(req.file.path).toString("base64"),
-//                 mimeType: req.file.mimetype,
-//               },
-//             },
-//           ]);
-//           aiAnalysis = aiResult.response.text();
-//         }
-//       } catch (aiError) {
-//         console.error("AI analysis error:", aiError);
-//         aiAnalysis =
-//           "AI analysis temporarily unavailable. Please consult with a healthcare professional.";
-//       }
+          const aiResult = await model.generateContent([
+            prompt,
+            {
+              inlineData: {
+                data: fs.readFileSync(req.file.path).toString("base64"),
+                mimeType: req.file.mimetype,
+              },
+            },
+          ]);
+          aiAnalysis = aiResult.response.text();
+        }
+      } catch (aiError) {
+        console.error("AI analysis error:", aiError);
+        aiAnalysis =
+          "AI analysis temporarily unavailable. Please consult with a healthcare professional.";
+      }
 
-//       // Add report to family member
-//       const report = {
-//         title: req.body.title || req.file.originalname,
-//         type: req.file.mimetype === "application/pdf" ? "pdf" : "image",
-//         // cloudinaryUrl: result.secure_url,
-//         aiAnalysis,
-//       };
+      // Add report to family member
+      const report = {
+        title: req.body.title || req.file.originalname,
+        type: req.file.mimetype === "application/pdf" ? "pdf" : "image",
+        // cloudinaryUrl: result.secure_url,
+        aiAnalysis,
+      };
 
-//       familyMember.reports.push(report);
-//       await familyMember.save();
+      familyMember.reports.push(report);
+      await familyMember.save();
 
-//       // // Clean up local file
-//       fs.unlinkSync(req.file.path);
-//       // console.log("report", report);
+      // // Clean up local file
+      fs.unlinkSync(req.file.path);
+      // console.log("report", report);
 
-//       res.status(201).json({
-//         message: "Report uploaded and analyzed successfully",
-//         report,
-//       });
-//     } catch (error) {
-//       // Clean up local file if it exists
-//       if (req.file && fs.existsSync(req.file.path)) {
-//         fs.unlinkSync(req.file.path);
-//       }
-//       res.status(500).json({ message: error.message, error: error.message });
-//     }
-//   }
-// );
+      res.status(201).json({
+        message: "Report uploaded and analyzed successfully",
+        report,
+      });
+    } catch (error) {
+      // Clean up local file if it exists
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      res.status(500).json({ message: error.message, error: error.message });
+    }
+  }
+);
 
-// // Get family member reports
-// app.get(
-//   "/api/family-members/:id/reports",
-//   authenticateToken,
-//   async (req, res) => {
-//     try {
-//       const familyMember = await FamilyMember.findOne({
-//         _id: req.params.id,
-//         userId: req.user.userId,
-//       });
+// Get family member reports
+app.get(
+  "/api/family-members/:id/reports",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const familyMember = await FamilyMember.findOne({
+        _id: req.params.id,
+        userId: req.user.userId,
+      });
 
-//       if (!familyMember) {
-//         return res.status(404).json({ message: "Family member not found" });
-//       }
+      if (!familyMember) {
+        return res.status(404).json({ message: "Family member not found" });
+      }
 
-//       res.json({ reports: familyMember.reports });
-//     } catch (error) {
-//       res.status(500).json({ message: "Server error", error: error.message });
-//     }
-//   }
-// );
+      res.json({ reports: familyMember.reports });
+    } catch (error) {
+      res.status(500).json({ message: "Server error", error: error.message });
+    }
+  }
+);
 
-// // AI Health Query endpoint
-// app.post("/api/ai/health-query", authenticateToken, async (req, res) => {
-//   try {
-//     const { question, context } = req.body;
+// AI Health Query endpoint
+app.post("/api/ai/health-query", authenticateToken, async (req, res) => {
+  try {
+    const { question, context } = req.body;
 
-//     if (!question || question.trim().length === 0) {
-//       return res.status(400).json({ message: "Question is required" });
-//     }
+    if (!question || question.trim().length === 0) {
+      return res.status(400).json({ message: "Question is required" });
+    }
 
-//     // Initialize Gemini AI
-//     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-//     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    // Initialize Gemini AI
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-//     // Create a health-focused prompt
-//     const healthPrompt = `
-// You are a helpful AI health assistant. Please provide accurate, helpful, and safe health information based on the user's question. 
+    // Create a health-focused prompt
+    const healthPrompt = `
+You are a helpful AI health assistant. Please provide accurate, helpful, and safe health information based on the user's question. 
 
-// IMPORTANT GUIDELINES:
-// - Provide general health information and educational content
-// - Always recommend consulting healthcare professionals for medical advice
-// - Be clear about limitations and when professional medical attention is needed
-// - Focus on prevention, wellness, and general health education
-// - Avoid providing specific medical diagnoses or treatment recommendations
-// - Include relevant health tips and lifestyle advice when appropriate
+IMPORTANT GUIDELINES:
+- Provide general health information and educational content
+- Always recommend consulting healthcare professionals for medical advice
+- Be clear about limitations and when professional medical attention is needed
+- Focus on prevention, wellness, and general health education
+- Avoid providing specific medical diagnoses or treatment recommendations
+- Include relevant health tips and lifestyle advice when appropriate
 
-// User Question: ${question}
+User Question: ${question}
 
-// Context: ${context || "general_health_inquiry"}
+Context: ${context || "general_health_inquiry"}
 
-// Please provide a helpful, informative, and safe response that includes:
-// 1. Direct answer to the question
-// 2. Additional relevant health information
-// 3. When to seek professional medical advice
-// 4. General wellness tips related to the topic
+Please provide a helpful, informative, and safe response that includes:
+1. Direct answer to the question
+2. Additional relevant health information
+3. When to seek professional medical advice
+4. General wellness tips related to the topic
 
-// Keep the response concise but comprehensive, and always emphasize the importance of professional medical consultation for specific health concerns.
-// `;
+Keep the response concise but comprehensive, and always emphasize the importance of professional medical consultation for specific health concerns.
+`;
 
-//     const result = await model.generateContent(healthPrompt);
-//     const response = await result.response;
-//     const aiResponse = response.text();
+    const result = await model.generateContent(healthPrompt);
+    const response = await result.response;
+    const aiResponse = response.text();
 
-//     res.json({
-//       response: aiResponse,
-//       timestamp: new Date().toISOString(),
-//       context: context || "general_health_inquiry",
-//     });
-//   } catch (error) {
-//     console.error("AI Health Query Error:", error);
-//     res.status(500).json({
-//       message: "Failed to process health query",
-//       error: error.message,
-//     });
-//   }
-// });
+    res.json({
+      response: aiResponse,
+      timestamp: new Date().toISOString(),
+      context: context || "general_health_inquiry",
+    });
+  } catch (error) {
+    console.error("AI Health Query Error:", error);
+    res.status(500).json({
+      message: "Failed to process health query",
+      error: error.message,
+    });
+  }
+});
 
-// // Error handling middleware
-// app.use((error, req, res, next) => {
-//   if (error instanceof multer.MulterError) {
-//     if (error.code === "LIMIT_FILE_SIZE") {
-//       return res
-//         .status(400)
-//         .json({ message: "File too large. Maximum size is 10MB." });
-//     }
-//   }
-//   res.status(500).json({ message: "Server error", error: error.message });
-// });
+// Error handling middleware
+app.use((error, req, res, next) => {
+  if (error instanceof multer.MulterError) {
+    if (error.code === "LIMIT_FILE_SIZE") {
+      return res
+        .status(400)
+        .json({ message: "File too large. Maximum size is 10MB." });
+    }
+  }
+  res.status(500).json({ message: "Server error", error: error.message });
+});
 
-// // Create uploads directory if it doesn't exist
-// if (!fs.existsSync("uploads")) {
-//   fs.mkdirSync("uploads");
-// }
+// Create uploads directory if it doesn't exist
+if (!fs.existsSync("uploads")) {
+  fs.mkdirSync("uploads");
+}
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
